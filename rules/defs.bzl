@@ -16,7 +16,7 @@ def _cc_resources_impl(ctx):
     tool_runfiles = ctx.attr._tool[DefaultInfo].default_runfiles.files  # Get this once
 
     for src_file in ctx.files.srcs:
-        src_stem = _get_stem(src_file.basename)  # e.g., "my_data" from "my_data.bin"
+        src_stem = _get_stem(src_file.basename) if ctx.attr.ext_hide else src_file.basename  # Use extension if ext is True
 
         if ctx.attr.out_prefix:
             # If out_prefix is "assets", and src_stem is "image", base_name becomes "assets_image"
@@ -87,6 +87,10 @@ cc_resources = rule(
         ),
         "out_prefix": attr.string(
             doc = "Optional prefix for output file names (e.g., 'my_res') and C variable names. If 'ui' and input is 'icon.png', output is 'ui_icon.h/cpp' and resource name 'ui_icon'.",
+        ),
+        "ext_hide": attr.bool(
+            default = True,
+            doc = "Whether to include the extension '.bin' in the output file names.",
         ),
         "_tool": attr.label(
             default = Label("//tools:bin_to_cc"),  # Make sure this path is correct

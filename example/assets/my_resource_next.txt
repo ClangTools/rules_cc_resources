@@ -1,0 +1,2 @@
+Hello, Bazel Resource!
+This is some data.

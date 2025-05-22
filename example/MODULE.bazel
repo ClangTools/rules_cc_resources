@@ -1,0 +1,8 @@
+# MODULE.bazel
+bazel_dep(name = "rules_cc_resources")
+local_path_override(
+    module_name = "rules_cc_resources",
+    path = "..",
+)
+
+bazel_dep(name = "rules_cc", version = "0.1.1")

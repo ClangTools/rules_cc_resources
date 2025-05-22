@@ -1,5 +1,5 @@
 # src/BUILD
-load("//rules:defs.bzl", "cc_resources")
+load("@rules_cc_resources//rules:defs.bzl", "cc_resources")
 
 # Use the rule to convert my_resource.txt
 cc_resources(
@@ -15,7 +15,6 @@ cc_library(
     name = "lib",
     srcs = [":app_resource"],
     includes = [
-        ".",
     ],
 )
 

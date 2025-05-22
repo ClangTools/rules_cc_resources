@@ -36,7 +36,13 @@ jobs:
           git config --global core.eol lf
 
       - name: Bazel Build app_resource
-        run: bazel build example:app_resource
+        run: |
+          cd example
+          bazel build --process_headers_in_dependencies app_resource
+          cd ..
 
       - name: Bazel Build app
-        run: bazel build example:app
+        run: |
+          cd example
+          bazel build --process_headers_in_dependencies app
+          cd ..

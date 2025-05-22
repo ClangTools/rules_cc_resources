@@ -15,7 +15,6 @@ cc_library(
     name = "lib",
     srcs = [":app_resource"],
     includes = [
-        ".",
     ],
 )
 

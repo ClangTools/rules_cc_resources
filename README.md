@@ -8,6 +8,11 @@ The `cc_resources` rule in Bazel is designed for converting binary files into C/
 
 Here is a brief overview of how to use the `cc_resources` rule in your Bazel build files.
 
+```bazel
+bazel_dep(name = "rules_cc_resources", version = "0.1.0")
+# load("@rules_cc_resources//rules:defs.bzl", "cc_resources")
+```
+
 #### Rule Definition
 
 You should define the `cc_resources` rule in your `BUILD.bazel` file with the required attributes:
@@ -41,7 +46,7 @@ When you invoke the `cc_resources` rule, it generates:
 Given the following `BUILD.bazel` setup:
 
 ```python
-load("//rules:defs.bzl", "cc_resources")
+load("@rules_cc_resources//rules:defs.bzl", "cc_resources")
 
 cc_resources(
     name = "image_resources",

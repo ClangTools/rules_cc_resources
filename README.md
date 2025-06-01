@@ -9,7 +9,7 @@ The `cc_resources` rule in Bazel is designed for converting binary files into C/
 Here is a brief overview of how to use the `cc_resources` rule in your Bazel build files.
 
 ```bazel
-bazel_dep(name = "rules_cc_resources", version = "0.1.0")
+bazel_dep(name = "rules_cc_resources", version = "0.2.0")
 # load("@rules_cc_resources//rules:defs.bzl", "cc_resources")
 ```
 

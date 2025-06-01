@@ -8,6 +8,7 @@ cc_resources(
         "assets/my_resource_next.txt",
         "my_resource.txt",
     ],
+    data_type = "uint",
     out_prefix = "example",
 )
 

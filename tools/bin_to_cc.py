@@ -22,11 +22,21 @@ def main():
     parser.add_argument("--output_h", required=True, help="Output header file path (.h).")
     parser.add_argument("--output_cpp", required=True, help="Output source file path (.cpp).")
     parser.add_argument("--resource_name", required=True, help="Base name for C variable and include guard.")
+    parser.add_argument("--data_type", choices=['char', 'uchar', 'uint'], default='uchar',
+                      help="Data type for the array (char, uchar=unsigned char, uint=unsigned int). Default: uchar")
     args = parser.parse_args()
 
     c_var_name = sanitize_for_c_identifier(args.resource_name)
     header_basename = os.path.basename(args.output_h) # e.g., my_resource.h
     include_guard = f"__{sanitize_for_c_identifier(args.resource_name).upper()}_H__"
+
+    # 根据选择的数据类型确定C类型
+    c_type_map = {
+        'char': 'char',
+        'uchar': 'unsigned char',
+        'uint': 'unsigned int'
+    }
+    data_type = c_type_map[args.data_type]
 
     try:
         with open(args.input, "rb") as f_in:
@@ -50,7 +60,7 @@ extern "C" {{
 typedef struct {{
     const char* name;
     size_t size;
-    const unsigned char* data;
+    const {data_type}* data;
 }} __ResourceData_{c_var_name};
 
 extern const __ResourceData_{c_var_name} {c_var_name};
@@ -77,19 +87,44 @@ extern const __ResourceData_{c_var_name} {c_var_name};
 
     cpp_content_parts.append(f"\n#ifdef __cplusplus\nextern \"C\" {{\n#endif\n")
 
-    cpp_content_parts.append(f"static const unsigned char {c_var_name}_data[] = {{")
-    if data:
+    cpp_content_parts.append(f"static const {data_type} {c_var_name}_data[] = {{")
+    
+    if args.data_type == 'uint':
+        # 对于unsigned int，每4个字节组成一个整数
+        for i in range(0, len(data), 4):
+            if i % 4 == 0:
+                cpp_content_parts.append("\n    ")
+            chunk = data[i:i+4]
+            # 如果最后一个块不足4字节，用0填充
+            while len(chunk) < 4:
+                chunk = chunk + b'\x00'
+            value = int.from_bytes(chunk, byteorder='little')
+            cpp_content_parts.append(f"0x{value:08X}u, ")
+    else:
+        # 对于char和unsigned char，保持原来的字节模式
         for i, byte in enumerate(data):
             if i % 12 == 0:
                 cpp_content_parts.append("\n    ")
-            cpp_content_parts.append(f"0x{byte:02X}, ")
-        # Remove trailing comma and space if data was not empty
+            if args.data_type == 'char':
+                cpp_content_parts.append(f"{byte:d}, ")
+            else:  # uchar
+                cpp_content_parts.append(f"0x{byte:02X}, ")
+
+    # Remove trailing comma and space if data was not empty
+    if data:
         cpp_content_parts[-1] = cpp_content_parts[-1].rstrip(', ')
     cpp_content_parts.append("\n};\n\n")
 
     cpp_content_parts.append(f"const __ResourceData_{c_var_name} {c_var_name} = {{\n")
     cpp_content_parts.append(f"    \"{args.resource_name}\",\n")
-    cpp_content_parts.append(f"    sizeof({c_var_name}_data),\n")
+    
+    # 对于uint类型，size需要调整为字节大小
+    if args.data_type == 'uint':
+        array_size = ((len(data) + 3) // 4) * 4  # 向上取整到4的倍数
+        cpp_content_parts.append(f"    {len(data)},  // 原始字节大小\n")
+    else:
+        cpp_content_parts.append(f"    sizeof({c_var_name}_data),\n")
+    
     cpp_content_parts.append(f"    {c_var_name}_data\n")
     cpp_content_parts.append(f"}};\n")
 
@@ -98,7 +133,7 @@ extern const __ResourceData_{c_var_name} {c_var_name};
     try:
         os.makedirs(os.path.dirname(args.output_cpp), exist_ok=True)
         with open(args.output_cpp, "w") as f_cpp:
-            f_cpp.write("".join(cpp_content_parts))
+            f_cpp.write(''.join(cpp_content_parts))
     except IOError as e:
         print(f"Error writing source file {args.output_cpp}: {e}")
         return 1

@@ -73,7 +73,8 @@ extern const __ResourceData_{c_var_name} {c_var_name};
 """
     try:
         os.makedirs(os.path.dirname(args.output_h), exist_ok=True)
-        with open(args.output_h, "w") as f_h:
+        # 使用UTF-8编码写入头文件
+        with open(args.output_h, "w", encoding='utf-8') as f_h:
             f_h.write(h_content)
     except IOError as e:
         print(f"Error writing header file {args.output_h}: {e}")
@@ -132,7 +133,8 @@ extern const __ResourceData_{c_var_name} {c_var_name};
 
     try:
         os.makedirs(os.path.dirname(args.output_cpp), exist_ok=True)
-        with open(args.output_cpp, "w") as f_cpp:
+        # 使用UTF-8编码写入源文件
+        with open(args.output_cpp, "w", encoding='utf-8') as f_cpp:
             f_cpp.write(''.join(cpp_content_parts))
     except IOError as e:
         print(f"Error writing source file {args.output_cpp}: {e}")

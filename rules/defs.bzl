@@ -30,14 +30,6 @@ def _cc_resources_impl(ctx):
             base_name = src_stem
             file_path_prefix = src_stem
 
-        # Declare output files for this specific resource
-        # Ensure declared paths are unique if out_prefix is not used and multiple inputs might have same stem from different dirs
-        # However, ctx.actions.declare_file handles uniqueness within the rule's output directory.
-        # If src_file.short_path is "path/to/data.bin", we might want "path_to_data"
-        # For simplicity, let's assume basenames are unique enough or out_prefix is used.
-        # A more robust way for uniqueness without out_prefix would be to incorporate parts of the path.
-        # For now, file_path_prefix from above is used.
-
         h_file = ctx.actions.declare_file(file_path_prefix + ".h")
         cpp_file = ctx.actions.declare_file(file_path_prefix + ".cpp")
 
@@ -48,10 +40,10 @@ def _cc_resources_impl(ctx):
         args.add("--input", src_file.path)
         args.add("--output_h", h_file.path)
         args.add("--output_cpp", cpp_file.path)
-
-        # The resource_name passed to the tool should be what the C variable is named
-        # This will be 'base_name' which incorporates the out_prefix if present.
         args.add("--resource_name", base_name)
+        
+        # 添加数据类型选择
+        args.add("--data_type", ctx.attr.data_type)
 
         ctx.actions.run(
             executable = ctx.executable._tool,
@@ -80,7 +72,6 @@ cc_resources = rule(
     implementation = _cc_resources_impl,
     attrs = {
         "srcs": attr.label_list(
-            # Changed from src to srcs
             mandatory = True,
             allow_files = True,  # Allow actual file paths
             doc = "List of input binary files.",
@@ -92,12 +83,29 @@ cc_resources = rule(
             default = True,
             doc = "Whether to include the extension '.bin' in the output file names.",
         ),
+        "data_type": attr.string(
+            values = ["char", "uchar", "uint"],
+            default = "uchar",
+            doc = "Data type for the array (char, uchar=unsigned char, uint=unsigned int).",
+        ),
         "_tool": attr.label(
-            default = Label("//tools:bin_to_cc"),  # Make sure this path is correct
+            default = Label("//tools:bin_to_cc"),
             cfg = "exec",
             executable = True,
             doc = "The binary to C/C++ conversion tool.",
         ),
     },
-    doc = "Converts binary files into .cpp and .h files. Each input file results in a separate .cpp and .h pair, defining a C-compatible struct {name, size, data}.",
+    doc = """
+    Converts binary files into C/C++ source files.
+    
+    This rule takes binary files and generates corresponding C/C++ header and source files
+    that contain the binary data as arrays. The generated files can be used to embed
+    resources directly into C/C++ programs.
+    
+    Attributes:
+        srcs: List of input binary files.
+        out_prefix: Optional prefix for output file names and C variable names.
+        ext_hide: Whether to exclude the file extension from generated names.
+        data_type: Data type for the generated array (char, uchar, or uint).
+    """,
 )

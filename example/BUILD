@@ -1,3 +1,6 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 # src/BUILD
 load("@rules_cc_resources//rules:defs.bzl", "cc_resources")
 
